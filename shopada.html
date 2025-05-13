@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collectiblez - Unique Collectibles Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            min-height: 100vh;
+        }
+        header {
+            grid-column: 1 / 4;
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        header h1 {
+            font-size: 1.8rem;
+        }
+        .sidebar {
+            background-color: #34495e;
+            color: white;
+            padding: 1rem 0;
+            position: sticky;
+            top: 78px;
+            height: calc(100vh - 78px);
+            overflow-y: auto;
+        }
+        .sidebar ul {
+            list-style: none;
+        }
+        .sidebar li a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 0.8rem 1.5rem;
+            transition: background-color 0.3s;
+        }
+        .sidebar li a:hover {
+            background-color: #2c3e50;
+        }
+        .sidebar li a.active {
+            background-color: #1abc9c;
+        }
+        .sidebar li a i {
+            margin-right: 0.5rem;
+            width: 20px;
+            text-align: center;
+        }
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: #2c3e50;
+        }
+        .submenu.show {
+            max-height: 500px;
+        }
+        .submenu li a {
+            padding-left: 2.5rem;
+        }
+        .category-menu i.fa-chevron-down {
+            transition: transform 0.3s;
+            float: right;
+            margin-top: 5px;
+        }
+        .category-menu.active i.fa-chevron-down {
+            transform: rotate(180deg);
+        }
+        .product-grid {
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 78px);
+        }
+        .category-section {
+            margin-bottom: 2rem;
+            scroll-margin-top: 80px;
+        }
+        .category-section h2 {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #1abc9c;
+            color: #2c3e50;
+        }
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .product {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            text-align: center;
+        }
+        .product:hover {
+            transform: translateY(-5px);
+        }
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .product-info {
+            padding: 1rem;
+        }
+        .product-title {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+        .product-price {
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 1rem;
+        }
+        .add-to-cart {
+            background-color: #1abc9c;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        .add-to-cart:hover {
+            background-color: #16a085;
+        }
+        .cart-sidebar {
+            background-color: white;
+            border-left: 1px solid #ddd;
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 78px);
+            position: sticky;
+            top: 78px;
+            height: calc(100vh - 78px);
+        }
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .cart-items {
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .cart-items.collapsed {
+            max-height: 0;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        .cart-item-info {
+            flex: 1;
+        }
+        .cart-item-title {
+            font-size: 0.9rem;
+        }
+        .cart-item-price {
+            font-size: 0.9rem;
+            color: #e74c3c;
+        }
+        .remove-item {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .cart-total {
+            text-align: right;
+            font-weight: bold;
+            margin: 1rem 0;
+            font-size: 1.1rem;
+        }
+        .checkout-form h3 {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .checkout-btn {
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 0.7rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        .checkout-btn:hover {
+            background-color: #1a252f;
+        }
+        .mobile-cart-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 200px 1fr;
+            }
+            .cart-sidebar {
+                width: 280px;
+            }
+        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+            .product-grid {
+                padding: 1rem;
+                grid-column: 1;
+            }
+            .products {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            .cart-sidebar {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 100%;
+                height: 100vh;
+                transform: translateX(100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 999;
+            }
+            .cart-sidebar.show {
+                transform: translateX(0);
+            }
+            .mobile-cart-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Collectiblez</h1>
+            <button class="mobile-cart-toggle" aria-label="Toggle cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count">0</span>
+            </button>
+        </header>
+
+
+        <nav class="sidebar">
+            <ul>
+                <li><a href="#" class="active"><i class="fas fa-home"></i> Home</a></li>
+                <li class="category-menu">
+                    <a href="#"><i class="fas fa-list"></i> Categories <i class="fas fa-chevron-down"></i></a>
+                    <ul class="submenu">
+                        <li><a href="#" data-category="action-figures">Action Figures</a></li>
+                        <li><a href="#" data-category="comics">Comics</a></li>
+                        <li><a href="#" data-category="vinyl-toys">Vinyl Toys</a></li>
+                        <li><a href="#" data-category="trading-cards">Trading Cards</a></li>
+                    </ul>
+                </li>
+                <li><a href="about-us-page.html"><i class="fas fa-info-circle"></i> About Us</a></li>
+            </ul>
+        </nav>
+
+
+        <main class="product-grid">
+            <section class="category-section" id="action-figures">
+                <h2>Action Figures</h2>
+                <div class="products"></div>
+            </section>
+            <section class="category-section" id="comics">
+                <h2>Comics</h2>
+                <div class="products"></div>
+            </section>
+            <section class="category-section" id="vinyl-toys">
+                <h2>Vinyl Toys</h2>
+                <div class="products"></div>
+            </section>
+            <section class="category-section" id="trading-cards">
+                <h2>Trading Cards</h2>
+                <div class="products"></div>
+            </section>
+        </main>
+
+
+        <aside class="cart-sidebar">
+            <div class="cart-header" id="cart-header">
+                <h3><i class="fas fa-shopping-cart"></i> Your Cart</h3>
+                <button class="close-cart">&times;</button>
+            </div>
+            <div class="cart-items" id="cart-items">
+            </div>
+            <div class="cart-total">
+                <p>Total: <span class="total-price">₱0.00</span></p>
+            </div>
+            <form class="checkout-form" action="http://47.129.9.35/cs3/checkout.php" method="POST">
+                <h3>Delivery Information</h3>
+                <div class="form-group">
+                    <label for="cust_name">Full Name:</label>
+                    <input type="text" id="cust_name" name="cust_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="cust_email">Email:</label>
+                    <input type="email" id="cust_email" name="cust_email" required>
+                </div>
+                <div class="form-group">
+                    <label for="cust_addr">Delivery Address:</label>
+                    <textarea id="cust_addr" name="cust_addr" required></textarea>
+                </div>
+                <input type="hidden" id="cust_order" name="cust_order">
+                <button type="submit" class="checkout-btn">Place Order</button>
+            </form>
+        </aside>
+    </div>
+
+
+    <script>
+        const products = {
+            "action-figures": [
+                { id: 1, title: "Limited Edition Spider-Man", price: 2799.99, image: "https://images.tcdn.com.br/img/img_prod/460977/action_figure_peter_parker_homem_aranha_spiderman_spiderverse_marvel_escala_1_10_sv_action_mkp_122119_1_de24431dc0ac9b7700361c3051ab9f27.jpg" },
+                { id: 2, title: "Batman: Dark Knight", price: 3399.99, image: "https://images.tcdn.com.br/img/img_prod/460977/action_figure_robert_pattinson_batman_the_batman_dc_comics_escala_1_12_mkp_135185_1_cb459237c3bead08e2f85837b1ab2403.jpeg" },
+                { id: 3, title: "Star Wars Darth Vader", price: 2299.99, image: "https://images.tcdn.com.br/img/img_prod/460977/action_figure_18cm_darth_vader_samurai_taisho_star_wars_disney_mkp_91837_1_350e08e0bce7a340c0975431c4393d2c.jpeg" },
+                { id: 4, title: "Marvel Legends Iron Man", price: 1599.99, image: "https://images.tcdn.com.br/img/img_prod/460977/action_figure_homem_de_ferro_iron_man_mark_3_iii_vingadores_avengers_marvel_comics_escala_1_10_zhong_96765_1_07a8862aed9fc1b071fc574fef7dee3b.jpg" },
+                { id: 5, title: "G.I. Joe Snake Eyes", price: 1999.99, image: "https://images.tcdn.com.br/img/img_prod/460977/action_figure_colecionavel_snake_eyes_g_i_joe_classified_series_hasbro_101117_1_f68d2af972244d3225151565c850c61a.jpg" }
+            ],
+            "comics": [
+                { id: 6, title: "Amazing Spider-Man #1", price: 399.99, image: "https://i.pinimg.com/originals/fe/33/af/fe33af9971b178930b02952dd0a01cfd.jpg" },
+                { id: 7, title: "Batman: The Killing Joke", price: 299.99, image: "https://img.livraddict.com/covers/249/249444/couv7826426.jpg" },
+                { id: 8, title: "X-Men #1", price: 199.99, image: "https://attractionsmagazine.com/wp-content/uploads/2023/12/X-Men-97-comic-Image-courtesy-of-Marvel-2.jpg" },
+                { id: 9, title: "Watchmen #1", price: 199.99, image: "https://images-na.ssl-images-amazon.com/images/S/pv-target-images/a22e2153f90a6587560ea0d328853f6e8919449cd79c16ad39418c312a3e0bb2._RI_TTW_.jpg" },
+                { id: 10, title: "Saga #1", price: 399.99, image: "https://i.etsystatic.com/5145657/r/il/3472e8/4769885184/il_570xN.4769885184_lg19.jpg" }
+            ],
+            "vinyl-toys": [
+                { id: 11, title: "Kidrobot Dunny", price: 8490.99, image: "https://i.pinimg.com/originals/5e/82/63/5e826309010b4fde11c5fc5d8e854055.jpg" },
+                { id: 12, title: "KAWS Companion", price: 35990.99, image: "https://image.invaluable.com/housePhotos/BlackRiver/78/666278/H21714-L201235849_original.jpg" },
+                { id: 13, title: "Bearbrick 100%", price: 5790.99, image: "https://urbanattitude.com.au/cdn/shop/products/bearbrick-100-blind-box-series-45-packaging-urban-attitude_620x.jpg" },
+                { id: 14, title: "Funko Pop! Batman", price: 990.99, image: "https://cdn11.bigcommerce.com/s-0kvv9/images/stencil/2560w/products/322256/465975/funkobat80318__23277.1581691561.jpg" },
+                { id: 15, title: "Mighty Jaxx Jason Freeny", price: 9990.99, image: "https://cdn.shopify.com/s/files/1/0265/1193/3528/products/mighty-jaxx-kandy-featuring-jason-freeny-blind-box-sanrio-characters-packaging-urban-attitude_1800x1800.jpg" }
+            ],
+            "trading-cards": [
+                { id: 16, title: "Pokémon Charizard", price: 19990.99, image: "https://www.hillscards.co.uk/images/pokemon-trading-card-game-4-102-charizard-rare-holo-card-celebrations-classic-collection-p67206-115897_image.jpg" },
+                { id: 17, title: "Magic: Black Lotus", price: 8890.99, image: "https://image-cdn.hypb.st/https://hypebeast.com/image/2022/10/magic-the-gathering-30th-anniversary-black-lotus-closer-look-01.jpg" },
+                { id: 18, title: "Yu-Gi-Oh! Blue Eyes", price: 1099.99, image: "https://cdn2.vendiloshop.it/651233-thickbox_default/yu-gi-oh-structure-deck-saga-of-blue-eyes-white-dragon-unlimited-edtion-display-8-english-version-konami.jpg" },
+                { id: 19, title: "Sports Card: MJ Rookie", price: 1590.99, image: "https://media.bleacherreport.com/image/upload/x_0,y_0,w_1795,h_1197,c_crop/c_fill,g_faces,w_1600,h_1600,q_95/v1676558441/bdnedtjf9f45uanwclnr.jpg" },
+                { id: 20, title: "Marvel Masterpieces", price: 2590.99, image: "https://assets.dacw.co/itemimages/867104_004_120924.jpg" }
+            ]
+        };
+
+
+        let cart = [];
+
+
+        const productGrid = document.querySelector('.product-grid');
+        const cartSidebar = document.querySelector('.cart-sidebar');
+        const cartItemsContainer = document.querySelector('.cart-items');
+        const cartTotal = document.querySelector('.total-price');
+        const cartCount = document.querySelector('.cart-count');
+        const mobileCartToggle = document.querySelector('.mobile-cart-toggle');
+        const closeCart = document.querySelector('.close-cart');
+        const checkoutForm = document.querySelector('.checkout-form');
+        const custOrderInput = document.querySelector('#cust_order');
+        const categoryMenu = document.querySelector('.category-menu');
+        const submenu = document.querySelector('.submenu');
+        const categoryLinks = document.querySelectorAll('.submenu a');
+        const cartHeader = document.getElementById('cart-header');
+        const cartItems = document.getElementById('cart-items');
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProducts();
+            updateCartCount();
+            setupEventListeners();
+        });
+
+
+        function renderProducts() {
+            for (const category in products) {
+                const categorySection = document.getElementById(category);
+                const productsContainer = categorySection.querySelector('.products');
+                products[category].forEach(product => {
+                    const productElement = document.createElement('div');
+                    productElement.className = 'product';
+                    productElement.innerHTML = `
+                        <div class="product-image">
+                            <img src="${product.image}" alt="${product.title}">
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-title">${product.title}</h3>
+                            <p class="product-price">₱${product.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <button class="add-to-cart" data-id="${product.id}" data-title="${product.title}" data-price="${product.price}">Add to Cart</button>
+                        </div>
+                    `;
+                    productsContainer.appendChild(productElement);
+                });
+            }
+        }
+
+
+        function setupEventListeners() {
+            mobileCartToggle.addEventListener('click', () => {
+                cartSidebar.classList.toggle('show');
+            });
+
+
+            closeCart.addEventListener('click', () => {
+                cartSidebar.classList.remove('show');
+            });
+
+
+            categoryMenu.addEventListener('click', (e) => {
+                e.preventDefault();
+                categoryMenu.classList.toggle('active');
+                submenu.classList.toggle('show');
+            });
+
+
+            categoryLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const category = link.getAttribute('data-category');
+                    const section = document.getElementById(category);
+                    submenu.classList.remove('show');
+                    categoryMenu.classList.remove('active');
+                    section.scrollIntoView({ behavior: 'smooth' });
+                    categoryLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                });
+            });
+
+
+            productGrid.addEventListener('click', (e) => {
+                if (e.target.classList.contains('add-to-cart')) {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    const title = e.target.getAttribute('data-title');
+                    const price = parseFloat(e.target.getAttribute('data-price'));
+                    addToCart(id, title, price);
+                    if (window.innerWidth <= 768) {
+                        cartSidebar.classList.add('show');
+                    }
+                }
+            });
+
+
+            cartItemsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-item')) {
+                    const id = parseInt(e.target.closest('.cart-item').getAttribute('data-id'));
+                    removeFromCart(id);
+                }
+            });
+
+
+            checkoutForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (cart.length === 0) {
+                    alert("Your cart is empty. Please add items before checking out.");
+                    return;
+                }
+                const orderItems = cart.map(item => ({
+                    prod_name: item.title,
+                    prod_price: item.price,
+                    quantity: item.quantity
+                }));
+                custOrderInput.value = JSON.stringify(orderItems);
+                this.submit();
+            });
+
+
+            cartHeader.addEventListener('click', () => {
+                cartItems.classList.toggle('collapsed');
+            });
+        }
+
+
+        function addToCart(id, title, price) {
+            const existingItem = cart.find(item => item.id === id);
+            if (!existingItem) {
+                cart.push({ id, title, price, quantity: 1 });
+                updateCart();
+            } else {
+                alert(`${title} is already in your cart.`);
+            }
+        }
+
+
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCart();
+        }
+
+
+        function updateCart() {
+            cartItemsContainer.innerHTML = '';
+            let total = 0;
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+                cartItem.setAttribute('data-id', item.id);
+                cartItem.innerHTML = `
+                    <div class="cart-item-info">
+                        <p class="cart-item-title">${item.title}</p>
+                        <p class="cart-item-price">₱${item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} x ${item.quantity}</p>
+                    </div>
+                    <button class="remove-item" aria-label="Remove item">&times;</button>
+                `;
+                cartItemsContainer.appendChild(cartItem);
+            });
+            cartTotal.textContent = `₱${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            updateCartCount();
+        }
+
+
+        function updateCartCount() {
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCount.textContent = count;
+        }
+    </script>
+</body>
+</html>
